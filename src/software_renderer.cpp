@@ -305,9 +305,12 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
   // Lambda function to test if a point is in a triangle
   //
   auto PointInTriangle = [=](float x, float y) {
-    bool test0 = LineEquationTest(x0, y0, x1, y1, x, y);
-    bool test1 = LineEquationTest(x1, y1, x2, y2, x, y);
-    bool test2 = LineEquationTest(x2, y2, x0, y0, x, y);
+    // bool test0 = LineEquationTest(x0, y0, x1, y1, x, y);
+    // bool test1 = LineEquationTest(x1, y1, x2, y2, x, y);
+    // bool test2 = LineEquationTest(x2, y2, x0, y0, x, y);
+    bool test0 = LineEquationTest(x0, y0, x2, y2, x, y);
+    bool test1 = LineEquationTest(x2, y2, x1, y1, x, y);
+    bool test2 = LineEquationTest(x1, y1, x0, y0, x, y);
     return test0 && test1 && test2;
   };
 
