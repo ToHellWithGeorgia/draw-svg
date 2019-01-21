@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include "assert.h"
 
 #include "triangulation.h"
 
@@ -16,7 +17,13 @@ namespace CS248 {
 
 // fill a sample location with color
 void SoftwareRendererImp::fill_sample(int sx, int sy, const Color &color) {
+  if (sx < 0 || sx >= target_w) return;
+  if (sy < 0 || sy >= target_h) return;
 
+  render_target[4 * (sx + sy * target_w)] = (uint8_t)(color.r * 255);
+  render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
+  render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
+  render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
 }
 
 // fill samples in the entire pixel specified by pixel coordinates
@@ -284,6 +291,89 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
                                               Color color ) {
   // Task 1: 
   // Implement triangle rasterization (you may want to call fill_sample here)
+
+  // Lambda function to test the line equation
+  //
+  auto LineEquationTest = [](float p0x, float p0y, float p1x, float p1y,
+                             float x, float y) {
+    float result = -(x - p0x) * (p1y - p0y) + (y - p0y) * (p1x - p0x);
+    // TODO: Check if this should be < or <=
+    //
+    return result <= 0;
+  };
+
+  // Lambda function to test if a point is in a triangle
+  //
+  auto PointInTriangle = [=](float x, float y) {
+    bool test0 = LineEquationTest(x0, y0, x1, y1, x, y);
+    bool test1 = LineEquationTest(x1, y1, x2, y2, x, y);
+    bool test2 = LineEquationTest(x2, y2, x0, y0, x, y);
+    return test0 && test1 && test2;
+  };
+
+  // We start from the point with both of the other 2 points on its same side
+  // (both direction), and use zigzag to traverse the shape.
+  // xstart and ystart belong to the same point
+  // xend and yend should be the greater of the rest 2
+  //
+  float xstart, ystart;
+  float xend, yend;
+  int xdir = 0, ydir = 0;
+
+
+  // Find the start and end point of the triangle traversal
+  //
+  vector<float> xs{x0, x1, x2};
+  vector<float> ys{y0, y1, y2};
+  vector<float> xsorted(xs);
+  vector<float> ysorted(ys);
+  sort(xsorted.begin(), xsorted.end());
+  sort(ysorted.begin(), ysorted.end());
+
+  for (int i = 0; i < 3; ++i) {
+    if (((xs[i] == xsorted[0]) || (xs[i] == xsorted[2])) &&
+        ((ys[i] == ysorted[0]) || (ys[i] == ysorted[2]))) {
+      xstart = xs[i];
+      ystart = ys[i];
+      break;
+    }
+  }
+
+  if (xstart == xsorted[0]) {
+    xend = xsorted[2];
+    xdir = 1;
+  } else if (xstart == xsorted[2]) {
+    xend = xsorted[0];
+    xdir = -1;
+  }
+
+  if (ystart == ysorted[0]) {
+    yend = ysorted[2];
+    ydir = 1;
+  } else if (ystart == ysorted[2]) {
+    yend = ysorted[0];
+    ydir = -1;
+  }
+
+  assert(xdir != 0);
+  assert(ydir != 0);
+  // std::cout << x0 << " " << y0 << " " << x1 << " " << y1 << " " << x2 << " "
+  //           << y2 << std::endl;
+  // std::cout << xstart << " " << ystart << std::endl;
+  // std::cout << xend << " " << yend << std::endl;
+
+  // Start traversing the triangle.
+  //
+  for (int sx = floor(xstart); sx != floor(xend); sx += xdir) {
+    for (int sy = floor(ystart); sy != floor(yend); sy += ydir) {
+      // Boundary check is included in fill_sample
+      // TODO: implement the zigzag
+      //
+      if (PointInTriangle(sx + 0.5, sy + 0.5)) {
+        fill_sample(sx, sy, color);
+      }
+    }
+  }
 
 }
 
