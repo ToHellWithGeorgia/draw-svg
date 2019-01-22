@@ -329,7 +329,7 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
     float result = -(x - p0x) * (p1y - p0y) + (y - p0y) * (p1x - p0x);
     // TODO: Check if this should be < or <=
     //
-    return result <= 0;
+    return result <= 0.0;
   };
 
 
@@ -400,17 +400,24 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
 
   assert(xdir != 0);
   assert(ydir != 0);
-
   // Start traversing the triangle.
   //
-  for (int sx = floor(xstart); sx != floor(xend); sx += xdir) {
-    for (int sy = floor(ystart); sy != floor(yend); sy += ydir) {
+  int txs = xdir == 1 ? floor(xstart) - 1 : ceil(xstart) + 1;
+  int txe = xdir == 1 ? ceil(xend) + 1 : floor(xend) - 1;
+  int tys = ydir == 1 ? floor(ystart) - 1 : ceil(ystart) + 1;
+  int tye = ydir == 1 ? ceil(yend) + 1 : floor(yend) - 1;
+  // for (int sx = floor(xstart); sx != floor(xend); sx += xdir) {
+  //   for (int sy = floor(ystart); sy != floor(yend); sy += ydir) {
+  for (int sx = txs; sx != txe; sx += xdir) {
+    for (int sy = tys; sy != tye; sy += ydir) {
       // Boundary check is included in fill_sample
       // TODO: implement the zigzag
       //
 
       // Perform the supersampling
       //
+
+      bool cur_in = false;
       for (int si = 0; si < sample_rate; ++si) {
         for (int sj = 0; sj < sample_rate; ++sj) {
           float inc = 0.5 / sample_rate;
@@ -419,6 +426,7 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
           }
         }
       }
+
     }
   }
 
