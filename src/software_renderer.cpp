@@ -17,37 +17,51 @@ namespace CS248 {
 
 // fill a sample location with color
 void SoftwareRendererImp::fill_sample(int sx, int sy, const Color &color) {
-  if (sx < 0 || sx >= target_w) return;
-  if (sy < 0 || sy >= target_h) return;
+  if (sx < 0 || sx >= w) return;
+  if (sy < 0 || sy >= h) return;
 
-  render_target[4 * (sx + sy * target_w)] = (uint8_t)(color.r * 255);
-  render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
-  render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
-  render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
+  Color pixel_color;
+  float inv255 = 1.0 / 255.0;
+  pixel_color.r = sample_buffer[4 * (sx + sy * w)] * inv255;
+  pixel_color.g = sample_buffer[4 * (sx + sy * w) + 1] * inv255;
+  pixel_color.b = sample_buffer[4 * (sx + sy * w) + 2] * inv255;
+  pixel_color.a = sample_buffer[4 * (sx + sy * w) + 3] * inv255;
+
+  pixel_color = ref->alpha_blending_helper(pixel_color, color);
+
+  sample_buffer[4 * (sx + sy * w)] = (uint8_t)(pixel_color.r * 255);
+  sample_buffer[4 * (sx + sy * w) + 1] = (uint8_t)(pixel_color.g * 255);
+  sample_buffer[4 * (sx + sy * w) + 2] = (uint8_t)(pixel_color.b * 255);
+  sample_buffer[4 * (sx + sy * w) + 3] = (uint8_t)(pixel_color.a * 255);
 }
 
 // fill samples in the entire pixel specified by pixel coordinates
 void SoftwareRendererImp::fill_pixel(int x, int y, const Color &color) {
 
 	// Task 2: Re-implement this function
+  for (int i = sample_rate * x; i < sample_rate * x + sample_rate; ++i) {
+    for (int j = sample_rate * y; j < sample_rate * y + sample_rate; ++j) {
+      fill_sample(i, j, color);
+    }
+  }  
 
-	// check bounds
-	if (x < 0 || x >= target_w) return;
-	if (y < 0 || y >= target_h) return;
+	// // check bounds
+	// if (x < 0 || x >= target_w) return;
+	// if (y < 0 || y >= target_h) return;
 
-	Color pixel_color;
-	float inv255 = 1.0 / 255.0;
-	pixel_color.r = render_target[4 * (x + y * target_w)] * inv255;
-	pixel_color.g = render_target[4 * (x + y * target_w) + 1] * inv255;
-	pixel_color.b = render_target[4 * (x + y * target_w) + 2] * inv255;
-	pixel_color.a = render_target[4 * (x + y * target_w) + 3] * inv255;
+	// Color pixel_color;
+	// float inv255 = 1.0 / 255.0;
+	// pixel_color.r = render_target[4 * (x + y * target_w)] * inv255;
+	// pixel_color.g = render_target[4 * (x + y * target_w) + 1] * inv255;
+	// pixel_color.b = render_target[4 * (x + y * target_w) + 2] * inv255;
+	// pixel_color.a = render_target[4 * (x + y * target_w) + 3] * inv255;
 
-	pixel_color = ref->alpha_blending_helper(pixel_color, color);
+	// pixel_color = ref->alpha_blending_helper(pixel_color, color);
 
-	render_target[4 * (x + y * target_w)] = (uint8_t)(pixel_color.r * 255);
-	render_target[4 * (x + y * target_w) + 1] = (uint8_t)(pixel_color.g * 255);
-	render_target[4 * (x + y * target_w) + 2] = (uint8_t)(pixel_color.b * 255);
-	render_target[4 * (x + y * target_w) + 3] = (uint8_t)(pixel_color.a * 255);
+	// render_target[4 * (x + y * target_w)] = (uint8_t)(pixel_color.r * 255);
+	// render_target[4 * (x + y * target_w) + 1] = (uint8_t)(pixel_color.g * 255);
+	// render_target[4 * (x + y * target_w) + 2] = (uint8_t)(pixel_color.b * 255);
+	// render_target[4 * (x + y * target_w) + 3] = (uint8_t)(pixel_color.a * 255);
 
 }
 
@@ -55,6 +69,9 @@ void SoftwareRendererImp::draw_svg( SVG& svg ) {
 
   // set top level transformation
   transformation = canvas_to_screen;
+
+  // Reset the sample buffer
+  std::fill(this->sample_buffer.begin(), this->sample_buffer.end(), 255);
 
   // draw all elements
   for ( size_t i = 0; i < svg.elements.size(); ++i ) {
@@ -83,6 +100,12 @@ void SoftwareRendererImp::set_sample_rate( size_t sample_rate ) {
   // You may want to modify this for supersampling support
   this->sample_rate = sample_rate;
 
+  // Resize the super sample buffer and clear the sample_buffer
+  //
+  this->w = this->target_w * sample_rate;
+  this->h = this->target_h * sample_rate;
+  this->sample_buffer.resize(4 * this->w * this->h);
+  
 }
 
 void SoftwareRendererImp::set_render_target( unsigned char* render_target,
@@ -94,6 +117,11 @@ void SoftwareRendererImp::set_render_target( unsigned char* render_target,
   this->target_w = width;
   this->target_h = height;
 
+  // Resize the super sample buffer and clear the sample_buffer
+  //
+  this->w = this->target_w * sample_rate;
+  this->h = this->target_h * sample_rate;
+  this->sample_buffer.resize(4 * this->w * this->h);
 }
 
 void SoftwareRendererImp::draw_element( SVGElement* element ) {
@@ -271,11 +299,11 @@ void SoftwareRendererImp::rasterize_point( float x, float y, Color color ) {
 
   // fill sample - NOT doing alpha blending!
   // TODO: Call fill_pixel here to run alpha blending
-  render_target[4 * (sx + sy * target_w)] = (uint8_t)(color.r * 255);
-  render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
-  render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
-  render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
-
+  // render_target[4 * (sx + sy * target_w)] = (uint8_t)(color.r * 255);
+  // render_target[4 * (sx + sy * target_w) + 1] = (uint8_t)(color.g * 255);
+  // render_target[4 * (sx + sy * target_w) + 2] = (uint8_t)(color.b * 255);
+  // render_target[4 * (sx + sy * target_w) + 3] = (uint8_t)(color.a * 255);
+  fill_pixel(sx, sy, color);
 }
 
 void SoftwareRendererImp::rasterize_line( float x0, float y0,
@@ -306,6 +334,7 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
 
 
   // Make sure P0-P1-P2 are in counter-clock-wise direction.
+  //
   bool ccw = LineEquationTest(x0, y0, x1, y1, x2, y2);
   if (!ccw) {
     float temp_x = x1; 
@@ -371,10 +400,6 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
 
   assert(xdir != 0);
   assert(ydir != 0);
-  // std::cout << x0 << " " << y0 << " " << x1 << " " << y1 << " " << x2 << " "
-  //           << y2 << std::endl;
-  // std::cout << xstart << " " << ystart << std::endl;
-  // std::cout << xend << " " << yend << std::endl;
 
   // Start traversing the triangle.
   //
@@ -383,8 +408,16 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
       // Boundary check is included in fill_sample
       // TODO: implement the zigzag
       //
-      if (PointInTriangle(sx + 0.5, sy + 0.5)) {
-        fill_sample(sx, sy, color);
+
+      // Perform the supersampling
+      //
+      for (int si = 0; si < sample_rate; ++si) {
+        for (int sj = 0; sj < sample_rate; ++sj) {
+          float inc = 0.5 / sample_rate;
+          if (PointInTriangle(sx + inc * (2 * si + 1), sy + inc * (2 * sj + 1))) {
+            fill_sample(sx * sample_rate + si, sy * sample_rate + sj, color);
+          }
+        }
       }
     }
   }
@@ -405,6 +438,34 @@ void SoftwareRendererImp::resolve( void ) {
   // Task 2: 
   // Implement supersampling
   // You may also need to modify other functions marked with "Task 2".
+
+  for (int i = 0; i < target_w; i++) {
+    for (int j = 0; j < target_h; j++) {
+      // Use a simple box filter first
+      //
+      int r = 0, g = 0, b = 0, a = 0;
+      for (int si = 0; si < sample_rate; ++si) {
+        for (int sj = 0; sj < sample_rate; ++sj) {
+          int sx = sample_rate * i + si;
+          int sy = sample_rate * j + sj;
+          r += sample_buffer[4 * (sx + sy * w)];
+          g += sample_buffer[4 * (sx + sy * w) + 1];
+          b += sample_buffer[4 * (sx + sy * w) + 2];
+          a += sample_buffer[4 * (sx + sy * w) + 3];
+        }
+      }
+
+      render_target[4 * (i + j * target_w)] = r / (sample_rate * sample_rate);
+      render_target[4 * (i + j * target_w) + 1] = g / (sample_rate * sample_rate);
+      render_target[4 * (i + j * target_w) + 2] = b / (sample_rate * sample_rate);
+      render_target[4 * (i + j * target_w) + 3] = a / (sample_rate * sample_rate);
+
+      // render_target[4 * (i + j * target_w)] = sample_buffer[4 * (i + j * target_w)];
+      // render_target[4 * (i + j * target_w) + 1] = sample_buffer[4 * (i + j * target_w) + 1];
+      // render_target[4 * (i + j * target_w) + 2] = sample_buffer[4 * (i + j * target_w) + 2];
+      // render_target[4 * (i + j * target_w) + 3] = sample_buffer[4 * (i + j * target_w) + 3];
+    }
+  }
   return;
 
 }
