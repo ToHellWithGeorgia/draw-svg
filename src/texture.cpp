@@ -85,12 +85,12 @@ Color Sampler2DImp::sample_nearest(Texture& tex,
   // Task 4: Implement nearest neighbour interpolation
   // TODO: fix this
   //
-  if (!(u >= 0 && u <= 1)) {
-    u = 1;
-  }
-  if (!(v >= 0 && v <= 1)) {
-    v = 1;
-  }
+  // if (!(u >= 0 && u <= 1)) {
+  //   u = 1;
+  // }
+  // if (!(v >= 0 && v <= 1)) {
+  //   v = 1;
+  // }
   if (level >= tex.mipmap.size())
     return Color(1,0,1,1);
 

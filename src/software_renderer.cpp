@@ -446,8 +446,10 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
           float inc = 0.5 / sample_rate;
           float u = (sx + inc * (2 * si + 1) - x0) / (x1 - x0);
           float v = (sy + inc * (2 * sj + 1) - y0) / (y1 - y0);
-          Color sample_color = sampler->sample_nearest(tex, u, v, 0);
-          fill_sample(sx * sample_rate + si, sy * sample_rate + sj, sample_color);
+          if (u >= 0 && u <= 1 && v >= 0 && v <= 1) {
+            Color sample_color = sampler->sample_nearest(tex, u, v, 0);
+            fill_sample(sx * sample_rate + si, sy * sample_rate + sj, sample_color);
+          }
         }
       }
     }
