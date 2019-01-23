@@ -83,14 +83,6 @@ Color Sampler2DImp::sample_nearest(Texture& tex,
                                    int level) {
 
   // Task 4: Implement nearest neighbour interpolation
-  // TODO: fix this
-  //
-  // if (!(u >= 0 && u <= 1)) {
-  //   u = 1;
-  // }
-  // if (!(v >= 0 && v <= 1)) {
-  //   v = 1;
-  // }
   if (level >= tex.mipmap.size())
     return Color(1,0,1,1);
 
@@ -111,9 +103,30 @@ Color Sampler2DImp::sample_bilinear(Texture& tex,
                                     int level) {
   
   // Task 4: Implement bilinear filtering
+  if (level >= tex.mipmap.size())
+    return Color(1,0,1,1);
+
+  Color color(0,0,0,0);
+  int tex_w = tex.mipmap[level].width;
+  int tex_h = tex.mipmap[level].height;
+
+  float sx = u * (tex_w - 1);
+  float sy = v * (tex_h - 1);
+
+  for (int ix = floor(sx - 0.5); ix <= floor(sx - 0.5) + 1; ++ix) {
+    for (int iy = floor(sy - 0.5); iy <= floor(sy - 0.5) + 1; ++iy) {
+      Color coord_color(1,1,1,1);
+      // Check edge
+      //
+      if (!(ix < 0 || ix > tex_w - 1 || iy < 0 || iy > tex_h - 1)) {
+        uint8_to_float(&coord_color.r, &tex.mipmap[level].texels[4 * (ix + iy * tex_w)]);
+      }
+      color += coord_color * (1 - abs(ix + 0.5 - sx)) * (1 - abs(iy + 0.5 - sy));
+    }
+  }
 
   // return magenta for invalid level
-  return Color(1,0,1,1);
+  return color;
 
 }
 
