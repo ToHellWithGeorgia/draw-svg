@@ -90,8 +90,8 @@ Color Sampler2DImp::sample_nearest(Texture& tex,
   int tex_w = tex.mipmap[level].width;
   int tex_h = tex.mipmap[level].height;
 
-  int ix = floor(u * (tex_w - 1));
-  int iy = floor(v * (tex_h - 1));
+  int ix = floor(u * (tex_w));
+  int iy = floor(v * (tex_h));
   uint8_to_float(&color.r, &tex.mipmap[level].texels[4 * (ix + iy * tex_w)]);
   // return magenta for invalid level
   return color;
@@ -110,8 +110,8 @@ Color Sampler2DImp::sample_bilinear(Texture& tex,
   int tex_w = tex.mipmap[level].width;
   int tex_h = tex.mipmap[level].height;
 
-  float sx = u * (tex_w - 1);
-  float sy = v * (tex_h - 1);
+  float sx = u * (tex_w);
+  float sy = v * (tex_h);
 
   for (int ix = floor(sx - 0.5); ix <= floor(sx - 0.5) + 1; ++ix) {
     for (int iy = floor(sy - 0.5); iy <= floor(sy - 0.5) + 1; ++iy) {
