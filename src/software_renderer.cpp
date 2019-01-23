@@ -363,7 +363,6 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
   float xend, yend;
   int xdir = 0, ydir = 0;
 
-
   // Find the start and end point of the triangle traversal
   //
   vector<float> xs{x0, x1, x2};
@@ -400,14 +399,14 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
 
   assert(xdir != 0);
   assert(ydir != 0);
+
   // Start traversing the triangle.
   //
   int txs = xdir == 1 ? floor(xstart) - 1 : ceil(xstart) + 1;
   int txe = xdir == 1 ? ceil(xend) + 1 : floor(xend) - 1;
   int tys = ydir == 1 ? floor(ystart) - 1 : ceil(ystart) + 1;
   int tye = ydir == 1 ? ceil(yend) + 1 : floor(yend) - 1;
-  // for (int sx = floor(xstart); sx != floor(xend); sx += xdir) {
-  //   for (int sy = floor(ystart); sy != floor(yend); sy += ydir) {
+  
   for (int sx = txs; sx != txe; sx += xdir) {
     for (int sy = tys; sy != tye; sy += ydir) {
       // Boundary check is included in fill_sample
@@ -416,8 +415,6 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
 
       // Perform the supersampling
       //
-
-      bool cur_in = false;
       for (int si = 0; si < sample_rate; ++si) {
         for (int sj = 0; sj < sample_rate; ++sj) {
           float inc = 0.5 / sample_rate;
@@ -437,7 +434,24 @@ void SoftwareRendererImp::rasterize_image( float x0, float y0,
                                            Texture& tex ) {
   // Task 4: 
   // Implement image rasterization (you may want to call fill_sample here)
+  int s_x0 = floor(x0), s_y0 = floor(y0);
+  int s_x1 = ceil(x1), s_y1 = ceil(y1);
 
+  for (int sx = s_x0; sx != s_x1; ++sx) {
+    for (int sy = s_y0; sy != s_y1; ++sy) {
+      // Perform the supersampling
+      //
+      for (int si = 0; si < sample_rate; ++si) {
+        for (int sj = 0; sj < sample_rate; ++sj) {
+          float inc = 0.5 / sample_rate;
+          float u = (sx + inc * (2 * si + 1) - x0) / (x1 - x0);
+          float v = (sy + inc * (2 * sj + 1) - y0) / (y1 - y0);
+          Color sample_color = sampler->sample_nearest(tex, u, v, 0);
+          fill_sample(sx * sample_rate + si, sy * sample_rate + sj, sample_color);
+        }
+      }
+    }
+  }
 }
 
 // resolve samples to render target
