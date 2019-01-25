@@ -94,6 +94,7 @@ public:
 	std::vector<unsigned char> sample_buffer; int w; int h;
 	void fill_sample(int sx, int sy, const Color& color);
 	void fill_pixel(int x, int y, const Color& color);
+	void alpha_blending(Color& pixel_color, const Color& color);
 
 private:
 

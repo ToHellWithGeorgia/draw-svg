@@ -27,12 +27,20 @@ void SoftwareRendererImp::fill_sample(int sx, int sy, const Color &color) {
   pixel_color.b = sample_buffer[4 * (sx + sy * w) + 2] * inv255;
   pixel_color.a = sample_buffer[4 * (sx + sy * w) + 3] * inv255;
 
-  pixel_color = ref->alpha_blending_helper(pixel_color, color);
+  // pixel_color = ref->alpha_blending_helper(pixel_color, color);
+  this->alpha_blending(pixel_color, color);
 
   sample_buffer[4 * (sx + sy * w)] = (uint8_t)(pixel_color.r * 255);
   sample_buffer[4 * (sx + sy * w) + 1] = (uint8_t)(pixel_color.g * 255);
   sample_buffer[4 * (sx + sy * w) + 2] = (uint8_t)(pixel_color.b * 255);
   sample_buffer[4 * (sx + sy * w) + 3] = (uint8_t)(pixel_color.a * 255);
+}
+
+void SoftwareRendererImp::alpha_blending(Color &pixel_color, const Color &color) {
+  pixel_color.a = 1 - (1 - pixel_color.a) * (1 - color.a);
+  pixel_color.r = (1 - color.a) * pixel_color.a * pixel_color.r + color.r * color.a;
+  pixel_color.g = (1 - color.a) * pixel_color.a * pixel_color.g + color.g * color.a;
+  pixel_color.b = (1 - color.a) * pixel_color.a * pixel_color.b + color.b * color.a; 
 }
 
 // fill samples in the entire pixel specified by pixel coordinates
