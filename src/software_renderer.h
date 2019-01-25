@@ -142,6 +142,11 @@ private:
 		float x2, float y2,
 		Color color);
 
+	// rasterize a ellipse
+	void rasterize_ellipse(float cx, float cy, float xx, float xy,
+						   float yx, float yy,
+						   Color stroke_color, Color fill_color);
+
 	// rasterize an image
 	void rasterize_image(float x0, float y0,
 		float x1, float y1,

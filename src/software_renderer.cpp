@@ -263,6 +263,19 @@ void SoftwareRendererImp::draw_polygon( Polygon& polygon ) {
 void SoftwareRendererImp::draw_ellipse( Ellipse& ellipse ) {
 
   // Extra credit 
+  float rx = ellipse.radius.x, ry = ellipse.radius.y;
+  float cx = ellipse.center.x, cy = ellipse.center.y;
+
+  // Get the edge point of x and y axis after transformation
+  //
+  Vector2D ct = transform(Vector2D(cx, cy));
+  Vector2D xt = transform(Vector2D(cx + rx, cy));
+  Vector2D yt = transform(Vector2D(cx, cy + ry));
+
+
+  rasterize_ellipse(ct.x, ct.y, xt.x, xt.y, yt.x, yt.y,
+                    ellipse.style.strokeColor,
+                    ellipse.style.fillColor);
 
 }
 
@@ -423,10 +436,77 @@ void SoftwareRendererImp::rasterize_triangle( float x0, float y0,
           }
         }
       }
+    }
+  }
+}
 
+void SoftwareRendererImp::rasterize_ellipse(float cx, float cy, 
+                                            float xx, float xy,
+                                            float yx, float yy,
+                                            Color stroke_color,
+                                            Color fill_color) {
+  // Calculate the transformed rx and ry
+  //
+  float rx = sqrt((xx - cx) * (xx - cx) + (xy - cy) * (xy - cy));
+  float ry = sqrt((yx - cx) * (yx - cx) + (yy - cy) * (yy - cy));
+
+  // Test if the point is in the ellipse.
+  //
+  auto PointInEllipse = [=] (float x, float y) {
+    return ((x - cx) * (x - cx)) / ((rx) * (rx)) +  
+           ((y - cy) * (y - cy)) / ((ry) * (ry)) <= 1;
+  };
+
+  // We sample 4 vectices + 1 middle point of the pixel.
+  // If not all the points are inside/outside of the ellipse
+  // it's on the edge.
+  //
+  auto PointOnEllipse = [=] (float x, float y, float inc) {
+    bool test1 = PointInEllipse(x - inc, y - inc);
+    bool test2 = PointInEllipse(x - inc, y + inc);
+    bool test3 = PointInEllipse(x + inc, y - inc);
+    bool test4 = PointInEllipse(x + inc, y + inc);
+    bool test5 = PointInEllipse(x, y);
+    return !((test1 && test2 && test3 && test4 && test5) ||
+             (!test1 && !test2 && !test3 && !test4 && !test5));
+  };
+
+  // TODO: implement non-axis aligned ellipse
+  //
+  float xstart = cx - rx, ystart = cy - ry;
+  float xend = cx + rx, yend = cy + ry;
+
+  // Rasterize the fill
+  for (int sx = floor(xstart); sx != ceil(xend); ++sx) {
+    for (int sy = floor(ystart); sy != ceil(yend); ++sy) {
+      // Perform the supersampling
+      //
+      for (int si = 0; si < sample_rate; ++si) {
+        for (int sj = 0; sj < sample_rate; ++sj) {
+          float inc = 0.5 / sample_rate;
+          if (PointInEllipse(sx + inc * (2 * si + 1), sy + inc * (2 * sj + 1))) {
+            fill_sample(sx * sample_rate + si, sy * sample_rate + sj, fill_color);
+          }
+        }
+      }
     }
   }
 
+  // Rasterize the outline
+  for (int sx = floor(xstart); sx != ceil(xend); ++sx) {
+    for (int sy = floor(ystart); sy != ceil(yend); ++sy) {
+      // Perform the supersampling
+      //
+      for (int si = 0; si < sample_rate; ++si) {
+        for (int sj = 0; sj < sample_rate; ++sj) {
+          float inc = 0.5 / sample_rate;
+          if (PointOnEllipse(sx + inc * (2 * si + 1), sy + inc * (2 * sj + 1), inc)) {
+            fill_sample(sx * sample_rate + si, sy * sample_rate + sj, stroke_color);
+          }
+        }
+      }
+    }
+  }
 }
 
 void SoftwareRendererImp::rasterize_image( float x0, float y0,
