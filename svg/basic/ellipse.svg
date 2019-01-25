@@ -6,7 +6,7 @@
 <title>Layer 1</title>
 <rect fill="#4a90d6" stroke="#222222" stroke-width="2" stroke-linejoin="round" stroke-dashoffset="" fill-rule="nonzero" id="svg_1" x="132" y="146" width="434" height="99" style="color: rgb(0, 0, 0);"/>
 <ellipse rx="100" ry="50" cx="400" cy="400" fill="#ED18ED" stroke="0000FF"/>
-<ellipse rx="50" ry="70" cx="100" cy="100" fill="#FF0000" stroke="000000"/>
+<ellipse transform="rotate(10)" rx="50" ry="70" cx="150" cy="150" fill="#FF0000" stroke="000000"/>
 <ellipse rx="80" ry="80" cx="600" cy="100" fill="#FFFF00" stroke="000000"/>
 </g>
 </svg>

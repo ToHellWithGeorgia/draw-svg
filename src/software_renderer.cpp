@@ -269,8 +269,8 @@ void SoftwareRendererImp::draw_ellipse( Ellipse& ellipse ) {
   // Get the edge point of x and y axis after transformation
   //
   Vector2D ct = transform(Vector2D(cx, cy));
-  Vector2D xt = transform(Vector2D(cx + rx, cy));
-  Vector2D yt = transform(Vector2D(cx, cy + ry));
+  Vector2D xt = transform(Vector2D(cx - rx, cy));
+  Vector2D yt = transform(Vector2D(cx, cy - ry));
 
 
   rasterize_ellipse(ct.x, ct.y, xt.x, xt.y, yt.x, yt.y,
@@ -445,16 +445,36 @@ void SoftwareRendererImp::rasterize_ellipse(float cx, float cy,
                                             float yx, float yy,
                                             Color stroke_color,
                                             Color fill_color) {
+  // Lambda to perform square
+  //
+  auto square = [] (float x) {
+    return x * x;
+  };
+
   // Calculate the transformed rx and ry
   //
   float rx = sqrt((xx - cx) * (xx - cx) + (xy - cy) * (xy - cy));
   float ry = sqrt((yx - cx) * (yx - cx) + (yy - cy) * (yy - cy));
 
+  // Caculate the sin(theta) and cos(theta)
+  //
+  Vector2D dir_a = Vector2D(-1, 0);
+  Vector2D dir_b = Vector2D(xx - cx, xy - cy);
+  Vector2D dir_n = Vector2D(0, -1);
+  float cosine = dot(dir_a, dir_b) / (dir_a.norm() * dir_b.norm());
+  float sine = 0.0;
+
+  if (dot(dir_n, dir_b) >= 0) {
+    sine = sqrt(1 - square(cosine));
+  } else {
+    sine = - sqrt(1 - square(cosine));
+  }
+
   // Test if the point is in the ellipse.
   //
   auto PointInEllipse = [=] (float x, float y) {
-    return ((x - cx) * (x - cx)) / ((rx) * (rx)) +  
-           ((y - cy) * (y - cy)) / ((ry) * (ry)) <= 1;
+    return square((x - cx) * cosine + (y - cy) * sine) / square(rx) +  
+           square((x - cx) * sine + (y - cy) * cosine) / square(ry) <= 1;
   };
 
   // We sample 4 vectices + 1 middle point of the pixel.
@@ -471,10 +491,11 @@ void SoftwareRendererImp::rasterize_ellipse(float cx, float cy,
              (!test1 && !test2 && !test3 && !test4 && !test5));
   };
 
-  // TODO: implement non-axis aligned ellipse
+  // In non axis-aligned ellipse, make sure we cover a bigger region
   //
-  float xstart = cx - rx, ystart = cy - ry;
-  float xend = cx + rx, yend = cy + ry;
+  float dec = rx > ry ? rx + 5 : ry + 5;
+  float xstart = cx - dec, ystart = cy - dec;
+  float xend = cx + dec, yend = cy + dec;
 
   // Rasterize the fill
   for (int sx = floor(xstart); sx != ceil(xend); ++sx) {
