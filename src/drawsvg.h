@@ -60,6 +60,7 @@ class DrawSVG : public Renderer {
   void render( void );
 
   void resize( size_t width, size_t height );
+  void save_png( size_t idx, bool is_ss );
 
   void keyboard_event(int key, int event, unsigned char mods);
   void char_event( unsigned int key );

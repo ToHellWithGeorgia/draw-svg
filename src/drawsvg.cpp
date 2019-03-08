@@ -4,6 +4,11 @@
 #include <iostream>
 #include <cstdlib>
 
+// Add additional support for write png out
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+
 using namespace std;
 
 namespace CS248 {
@@ -127,6 +132,33 @@ void DrawSVG::resize( size_t width, size_t height ) {
   redraw();
 }
 
+void DrawSVG::save_png( size_t idx, bool is_ss ) {
+  string post = ".raw";
+  string pre = "../svg/rand/rand_";
+  string ss_id = "_ss";
+  stringstream fn;
+  if (is_ss) {
+    fn << pre << setfill('0') << setw(3) << idx << ss_id << post;
+  } else {
+    fn << pre << setfill('0') << setw(3) << idx << post;
+  }
+
+  fstream fh(fn.str(), fstream::out);
+  fh << width << " " << height << " \n";
+  for (int i = 0; i < this->height; ++i) {
+    for (int j = 0; j < this->width; ++j) {
+      for (int k = 0; k < 4; ++k) {
+        fh << (int)framebuffer[4 * (i * width + j) + k] << " ";
+      }
+      fh << "\n";
+    }
+  }
+
+  fh.close();
+  cout << "Framebuffer written to " << fn.str() << " width: " << width
+       << "height: " << height << endl;
+}
+
 void DrawSVG::keyboard_event(int key, int event, unsigned char mods) {
   if (event == GLFW_PRESS) {
     if (key == GLFW_KEY_LEFT_SHIFT) {
@@ -198,6 +230,15 @@ void DrawSVG::char_event( unsigned int key ) {
     // toggle zoom
     case 'z': case 'Z':
       show_zoom = !show_zoom;
+      break;
+
+    // Save the rendered scene to output file
+    case 'o': case 'O':
+      save_png(0, false);
+      break;
+
+    case 'p': case 'P':
+      save_png(0, true);
       break;
 
     // tab selection
