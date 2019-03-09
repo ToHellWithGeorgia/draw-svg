@@ -599,6 +599,7 @@ void SoftwareRendererImp::resolve( void ) {
       // render_target[4 * (i + j * target_w) + 3] = sample_buffer[4 * (i + j * target_w) + 3];
     }
   }
+  // cout << "target width: " << target_w << " height: " << target_h << endl;
   return;
 
 }

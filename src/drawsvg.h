@@ -60,7 +60,8 @@ class DrawSVG : public Renderer {
   void render( void );
 
   void resize( size_t width, size_t height );
-  void save_png( size_t idx, bool is_ss );
+  void save_png( bool is_ss );
+  void inc_sample_rate();
 
   void keyboard_event(int key, int event, unsigned char mods);
   void char_event( unsigned int key );
@@ -165,7 +166,7 @@ class DrawSVG : public Renderer {
 
   /* samples rate (sqrt(s/pix)) */
   size_t sample_rate;
-  void inc_sample_rate();
+  // void inc_sample_rate();
   void dec_sample_rate();
 
   /* regenerate mipmap */

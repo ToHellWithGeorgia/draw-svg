@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include "string.h"
 
 #include "color.h"
 #include "texture.h"
@@ -117,6 +118,7 @@ struct Image : SVGElement {
 struct SVG {
 
   ~SVG();
+  std::string fileid;
   float width, height;
   std::vector<SVGElement*> elements;
 

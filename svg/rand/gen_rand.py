@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+from tqdm import tqdm
 
 line1 = '<?xml version="1.0" encoding="utf-8"?>\n'
 line2 = '<!-- Generator: Python script. InTeResTinG -->\n'
@@ -16,10 +17,12 @@ file_pre = 'rand_'
 file_post = '.svg'
 
 # Parameters are here
+save_dir = 'data/rand_svg/'
+file_pre = save_dir + file_pre
 file_start_idx = 0
-num_generated = 3
-max_num_shapes = 15
-min_num_shapes = 5
+num_generated = 200
+max_num_shapes = 70
+min_num_shapes = 50
 max_side = 600.0
 min_side = 0.0
 
@@ -41,7 +44,7 @@ def gen_rand_colors():
   b = str_pad_zero(hex(random.randint(0, 255))[2:], 2)
   return r + g + b
 
-for idx in range(num_generated):
+for idx in tqdm(range(num_generated)):
   file_idx = file_start_idx + idx
   fn = file_pre + str_pad_zero(file_idx) + file_post
 

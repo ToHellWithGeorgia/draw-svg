@@ -132,15 +132,16 @@ void DrawSVG::resize( size_t width, size_t height ) {
   redraw();
 }
 
-void DrawSVG::save_png( size_t idx, bool is_ss ) {
+void DrawSVG::save_png( bool is_ss ) {
   string post = ".raw";
-  string pre = "../svg/rand/rand_";
+  string pre = "/home/jack/Documents/CS248/draw-svg/svg/rand/data/raw/";
+  string fid = tabs[current_tab]->fileid;
   string ss_id = "_ss";
   stringstream fn;
   if (is_ss) {
-    fn << pre << setfill('0') << setw(3) << idx << ss_id << post;
+    fn << pre << fid << ss_id << post;
   } else {
-    fn << pre << setfill('0') << setw(3) << idx << post;
+    fn << pre << fid << post;
   }
 
   fstream fh(fn.str(), fstream::out);
@@ -155,8 +156,10 @@ void DrawSVG::save_png( size_t idx, bool is_ss ) {
   }
 
   fh.close();
+
+  // cout << tabs[current_tab]->fileid << endl;
   cout << "Framebuffer written to " << fn.str() << " width: " << width
-       << "height: " << height << endl;
+       << " height: " << height << endl;
 }
 
 void DrawSVG::keyboard_event(int key, int event, unsigned char mods) {
@@ -234,11 +237,11 @@ void DrawSVG::char_event( unsigned int key ) {
 
     // Save the rendered scene to output file
     case 'o': case 'O':
-      save_png(0, false);
+      save_png(false);
       break;
 
     case 'p': case 'P':
-      save_png(0, true);
+      save_png(true);
       break;
 
     // tab selection

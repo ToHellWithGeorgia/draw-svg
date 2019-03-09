@@ -13,7 +13,11 @@ using namespace CS248;
 
 int loadFile( DrawSVG* drawsvg, const char* path ) {
 
+  string fn = path;
+  fn = fn.substr(fn.find_last_of("/") + 1, 8);
+  // cout << fn << endl;
   SVG* svg = new SVG();
+  svg->fileid = fn;
 
   if( SVGParser::load( path, svg ) < 0) {
     delete svg;
@@ -108,6 +112,14 @@ int main( int argc, char** argv ) {
 
   // init viewer
   viewer.init();
+
+  drawsvg->save_png(false);
+  drawsvg->inc_sample_rate();
+  drawsvg->inc_sample_rate();
+  drawsvg->inc_sample_rate();
+  drawsvg->inc_sample_rate();
+  drawsvg->save_png(true);
+  exit(0);
 
   // start viewer
   viewer.start();
